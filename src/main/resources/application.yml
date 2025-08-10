@@ -8,6 +8,11 @@ spring:
     password: 6379362346
     driver-class-name: oracle.jdbc.OracleDriver
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -34,7 +39,14 @@ springdoc:
     tagsSorter: alpha
     tryItOutEnabled: true
 
-# Enable debug logging for Flyway
+# Enable debug logging
 logging:
   level:
     org.flywaydb: DEBUG
+    org.springframework.security: DEBUG
+    com.bank.kyc.security: DEBUG  # Add this line for your JWT filter
+    com.bank.kyc: DEBUG           # Add this for all your application logs
+
+jwt:
+  secret: bXlfc3VwZXJfc2VjdXJlX3Rlc3Rfa2V5XzEyMzQ1Njc4OTA=  # Base64 of 32-byte key
+  expiration-ms: 3600000

@@ -16,4 +16,7 @@ public interface KycService {
     void deleteDocument(Long documentId, String username);
     List<KycDocumentResponse> getPendingVerifications();
     Map<String, Long> getKycStats();
+
+    // NEW: Document ownership verification
+    boolean verifyDocumentOwnership(Long documentId, Long customerId);
 }
