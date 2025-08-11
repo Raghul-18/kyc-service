@@ -35,12 +35,43 @@ public class KycDocument {
     @Enumerated(EnumType.STRING)
     private VerificationStatus status;
 
-    @Column(length = 1000)
-    private String message;
-
-    private String verifiedBy;
 
     private LocalDateTime uploadedAt;
+    // Add these fields to your existing KYCDocument entity
+
+    @Column(name = "verified_by")
+    private String verifiedBy;
+
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
+    @Column(name = "message", length = 1000)
+    private String message;
+
+    // Add getters and setters
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     @PrePersist
     public void onCreate() {

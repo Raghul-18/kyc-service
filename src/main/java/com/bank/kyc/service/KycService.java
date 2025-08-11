@@ -1,6 +1,7 @@
 package com.bank.kyc.service;
 
 import com.bank.kyc.dto.KycDocumentResponse;
+import com.bank.kyc.dto.KycStatsDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +20,17 @@ public interface KycService {
 
     // NEW: Document ownership verification
     boolean verifyDocumentOwnership(Long documentId, Long customerId);
+
+    // ✅ NEW: Document verification and rejection
+    void verifyDocument(Long documentId, String message, String verifiedBy);
+    void rejectDocument(Long documentId, String message, String verifiedBy);
+
+    // ✅ NEW: Check if all required documents for a customer are verified
+    boolean areAllDocumentsVerified(Long customerId);
+
+    // ✅ NEW: Get structured KYC statistics
+    KycStatsDTO getKYCStatistics();
+
+    // ✅ NEW: Raw documents by customerId (if needed separately)
+    List<com.bank.kyc.entity.KycDocument> getDocumentsByCustomerId(Long customerId);
 }

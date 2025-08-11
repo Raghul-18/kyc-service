@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - KYC Management System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #F8F9FA;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2C3E50;
+    }
+
+    .login-container {
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(44, 62, 80, 0.1);
+      padding: 3rem;
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid rgba(151, 157, 172, 0.2);
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: #0466c8;
+      border-radius: 12px;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2C3E50;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-subtitle {
+      font-size: 0.875rem;
+      color: #6C757D;
+      font-weight: 400;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #2C3E50;
+      font-size: 0.875rem;
+    }
+
+    .form-label .required {
+      color: #E74C3C;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #E9ECEF;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      background: #FFFFFF;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #0466c8;
+      box-shadow: 0 0 0 3px rgba(4, 102, 200, 0.1);
+    }
+
+    .form-input.error {
+      border-color: #E74C3C;
+    }
+
+    .form-input.error:focus {
+      border-color: #E74C3C;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    }
+
+    .error-message {
+      color: #E74C3C;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.875rem;
+      background: #0466c8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-btn:hover:not(:disabled) {
+      background: #0353a4;
+      transform: translateY(-1px);
+    }
+
+    .login-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .login-btn:disabled {
+      background: #979DAC;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+      display: none;
+    }
+
+    .login-btn.loading .loading-spinner {
+      display: block;
+    }
+
+    .login-btn.loading .btn-text {
+      opacity: 0.8;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      border: 1px solid;
+    }
+
+    .alert-error {
+      background: #FEF2F2;
+      border-color: #FECACA;
+      color: #B91C1C;
+    }
+
+    .admin-badge {
+      background: #0466c8;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 576px) {
+      .login-container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .logo {
+        width: 56px;
+        height: 56px;
+        font-size: 1.25rem;
+      }
+
+      .logo-text {
+        font-size: 1.25rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <div class="logo-section">
+    <div class="logo">KYC</div>
+    <div class="admin-badge">Administrator</div>
+    <h1 class="logo-text">KYC Management</h1>
+    <p class="logo-subtitle">Admin Dashboard Access</p>
+  </div>
+
+  <!-- Error Alert (Hidden by default) -->
+  <div class="alert alert-error" id="errorAlert" style="display: none;">
+    <span id="errorMessage">Invalid credentials. Please try again.</span>
+  </div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="username" class="form-label">
+        Username <span class="required">*</span>
+      </label>
+      <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-input"
+              required
+              autocomplete="username"
+              placeholder="Enter admin username"
+              value="admin"
+      >
+      <div class="error-message" id="usernameError">
+        Username must be at least 3 characters long
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password" class="form-label">
+        Password <span class="required">*</span>
+      </label>
+      <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-input"
+              required
+              autocomplete="current-password"
+              placeholder="Enter admin password"
+      >
+      <div class="error-message" id="passwordError">
+        Password must be at least 6 characters long
+      </div>
+    </div>
+
+    <button type="submit" class="login-btn" id="loginButton">
+      <div class="loading-spinner"></div>
+      <span class="btn-text">Sign In to Dashboard</span>
+    </button>
+  </form>
+</div>
+
+<script>
+  // DOM Elements
+  const loginForm = document.getElementById('loginForm');
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
+  const loginButton = document.getElementById('loginButton');
+  const errorAlert = document.getElementById('errorAlert');
+  const errorMessage = document.getElementById('errorMessage');
+
+  // Real-time validation
+  usernameInput.addEventListener('input', validateUsername);
+  passwordInput.addEventListener('input', validatePassword);
+  usernameInput.addEventListener('blur', validateUsername);
+  passwordInput.addEventListener('blur', validatePassword);
+  [usernameInput, passwordInput].forEach(input => {
+    input.addEventListener('input', hideErrorAlert);
+  });
+
+  // Form submission
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const isUsernameValid = validateUsername();
+    const isPasswordValid = validatePassword();
+
+    if (!isUsernameValid || !isPasswordValid) {
+      return;
+    }
+
+    setLoadingState(true);
+    hideErrorAlert();
+
+    const payload = {
+      username: usernameInput.value.trim(),
+      password: passwordInput.value
+    };
+
+    // Login via KYC service (port 8084) - UPDATED ENDPOINT
+    fetch('http://localhost:8084/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+            .then(response => {
+              if (!response.ok) throw new Error('Invalid credentials');
+              return response.json();
+            })
+            .then(data => {
+              // Store JWT token
+              localStorage.setItem('adminToken', data.token);
+              localStorage.setItem('adminRole', data.role);
+              localStorage.setItem('adminUserId', data.userId);
+              localStorage.setItem('adminUsername', data.username);
+
+              // Redirect to KYC service dashboard
+              window.location.href = '/admin/dashboard';
+            })
+            .catch(err => {
+              console.error('Login error:', err);
+              showErrorAlert(err.message || 'Login failed');
+            })
+            .finally(() => {
+              setLoadingState(false);
+            });
+  });
+
+  // Validation logic
+  function validateUsername() {
+    const username = usernameInput.value.trim();
+    const isValid = username.length >= 3;
+    toggleFieldError(usernameInput, 'usernameError', !isValid);
+    return isValid;
+  }
+
+  function validatePassword() {
+    const password = passwordInput.value;
+    const isValid = password.length >= 6;
+    toggleFieldError(passwordInput, 'passwordError', !isValid);
+    return isValid;
+  }
+
+  function toggleFieldError(input, errorId, showError) {
+    const errorElement = document.getElementById(errorId);
+    if (showError) {
+      input.classList.add('error');
+      errorElement.classList.add('show');
+    } else {
+      input.classList.remove('error');
+      errorElement.classList.remove('show');
+    }
+  }
+
+  function setLoadingState(loading) {
+    if (loading) {
+      loginButton.classList.add('loading');
+      loginButton.disabled = true;
+    } else {
+      loginButton.classList.remove('loading');
+      loginButton.disabled = false;
+    }
+  }
+
+  function showErrorAlert(message) {
+    errorMessage.textContent = message;
+    errorAlert.style.display = 'block';
+    errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function hideErrorAlert() {
+    errorAlert.style.display = 'none';
+  }
+
+  // Check if already logged in
+  document.addEventListener('DOMContentLoaded', function () {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      // Verify token is still valid
+      fetch('/admin/dashboard')
+              .then(response => {
+                if (response.ok) {
+                  window.location.href = '/admin/dashboard';
+                }
+              })
+              .catch(() => {
+                // Token invalid, stay on login page
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminRole');
+                localStorage.removeItem('adminUserId');
+                localStorage.removeItem('adminUsername');
+              });
+    }
+  });
+</script>
+
+</body>
+</html>

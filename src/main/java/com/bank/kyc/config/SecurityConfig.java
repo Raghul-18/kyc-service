@@ -20,6 +20,8 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/admin/login").permitAll()  // ✅ Allow access to admin login page
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // ✅ Static files
                         .requestMatchers("/api/kyc/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/kyc/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .anyRequest().authenticated()
@@ -28,4 +30,5 @@ public class SecurityConfig {
         log.info("✅ SecurityFilterChain configured successfully");
         return http.build();
     }
+
 }

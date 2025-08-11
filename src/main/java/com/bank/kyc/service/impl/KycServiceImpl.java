@@ -1,6 +1,7 @@
 package com.bank.kyc.service.impl;
 
 import com.bank.kyc.dto.KycDocumentResponse;
+import com.bank.kyc.dto.KycStatsDTO;
 import com.bank.kyc.entity.KycDocument;
 import com.bank.kyc.repository.KycDocumentRepository;
 import com.bank.kyc.service.KycService;
@@ -12,9 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import com.bank.kyc.enums.DocumentStatus;
 
 @Slf4j
 @Service
@@ -67,6 +71,7 @@ public class KycServiceImpl implements KycService {
         doc.setStatus(VerificationStatus.valueOf(status.toUpperCase()));
         doc.setMessage(message);
         doc.setVerifiedBy(verifiedBy);
+        doc.setVerifiedAt(LocalDateTime.now());
 
         KycDocument updated = repository.save(doc);
         log.info("✅ Document {} status updated to {}", documentId, status);
@@ -142,6 +147,85 @@ public class KycServiceImpl implements KycService {
         return repository.findById(documentId)
                 .map(doc -> doc.getCustomerId().equals(customerId))
                 .orElse(false);
+    }
+
+    @Override
+    public void verifyDocument(Long documentId, String message, String verifiedBy) {
+        log.info("✅ Verifying document {} by {}", documentId, verifiedBy);
+
+        KycDocument document = repository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        document.setStatus(VerificationStatus.VERIFIED);
+        document.setMessage(message != null ? message : "Document verified successfully");
+        document.setVerifiedBy(verifiedBy);
+        document.setVerifiedAt(LocalDateTime.now());
+
+        repository.save(document);
+        log.info("✅ Document {} verified successfully", documentId);
+    }
+
+    @Override
+    public void rejectDocument(Long documentId, String message, String verifiedBy) {
+        log.info("❌ Rejecting document {} by {}", documentId, verifiedBy);
+
+        if (message == null || message.trim().isEmpty()) {
+            throw new RuntimeException("Rejection message is required");
+        }
+
+        KycDocument document = repository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        document.setStatus(VerificationStatus.REJECTED);
+        document.setMessage(message);
+        document.setVerifiedBy(verifiedBy);
+        document.setVerifiedAt(LocalDateTime.now());
+
+        repository.save(document);
+        log.info("❌ Document {} rejected successfully", documentId);
+    }
+
+    @Override
+    public boolean areAllDocumentsVerified(Long customerId) {
+        log.info("🔍 Checking if all required documents are verified for customer {}", customerId);
+
+        List<KycDocument> documents = getDocumentsByCustomerId(customerId);
+
+        Set<String> requiredTypes = Set.of("AADHAR", "PAN", "PHOTO");
+        Set<String> verifiedTypes = documents.stream()
+                .filter(doc -> doc.getStatus() == VerificationStatus.VERIFIED)
+                .map(doc -> doc.getDocumentType().toUpperCase())
+                .collect(Collectors.toSet());
+
+        boolean result = verifiedTypes.containsAll(requiredTypes);
+        log.info("✅ All documents verified: {}", result);
+        return result;
+    }
+
+    @Override
+    public KycStatsDTO getKYCStatistics() {
+        log.info("📊 Fetching structured KYC statistics");
+
+        long total = repository.count();
+        long pending = repository.countByStatus(DocumentStatus.PENDING);
+        long verified = repository.countByStatus(DocumentStatus.VERIFIED);
+        long rejected = repository.countByStatus(DocumentStatus.REJECTED);
+
+        KycStatsDTO stats = KycStatsDTO.builder()
+                .total(total)
+                .pending(pending)
+                .verified(verified)
+                .rejected(rejected)
+                .build();
+
+        log.info("📊 Stats: {}", stats);
+        return stats;
+    }
+
+    @Override
+    public List<KycDocument> getDocumentsByCustomerId(Long customerId) {
+        log.info("📄 Fetching raw documents for customer {}", customerId);
+        return repository.findByCustomerId(customerId);
     }
 
     private KycDocumentResponse toResponse(KycDocument doc) {

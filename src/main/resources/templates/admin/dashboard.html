@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - KYC Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F8F9FA;
+            color: #2C3E50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #FFFFFF;
+            border-bottom: 1px solid #E9ECEF;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #0466c8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-info {
+            font-size: 0.875rem;
+            color: #6C757D;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: #E74C3C;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #C0392B;
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #FFFFFF;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #E9ECEF;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0466c8;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6C757D;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filters-section {
+            background: #FFFFFF;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border: 1px solid #E9ECEF;
+        }
+
+        .filters-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2C3E50;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #2C3E50;
+        }
+
+        .filter-input, .filter-select {
+            padding: 0.75rem;
+            border: 2px solid #E9ECEF;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #0466c8;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: #0466c8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #0353a4;
+        }
+
+        .customers-section {
+            background: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #E9ECEF;
+        }
+
+        .customers-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #E9ECEF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .customers-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .customers-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .customers-table th,
+        .customers-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #E9ECEF;
+        }
+
+        .customers-table th {
+            background: #F8F9FA;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #2C3E50;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .customers-table td {
+            font-size: 0.875rem;
+        }
+
+        .customers-table tr:hover {
+            background: #F8F9FA;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-verified {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .action-btn-primary {
+            background: #0466c8;
+            color: white;
+        }
+
+        .action-btn-primary:hover {
+            background: #0353a4;
+            color: white;
+        }
+
+        .no-customers {
+            padding: 3rem;
+            text-align: center;
+            color: #6C757D;
+        }
+
+        .no-customers-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .customers-table {
+                font-size: 0.75rem;
+            }
+
+            .customers-table th,
+            .customers-table td {
+                padding: 0.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .customers-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">KYC</div>
+            <div class="header-title">Admin Dashboard</div>
+        </div>
+        <div class="header-right">
+            <div class="admin-info">
+                Welcome, <span id="adminUsername">Administrator</span>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" th:text="${kycStats.total ?: 0}">0</div>
+                <div class="stat-label">Total Documents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" th:text="${kycStats.pending ?: 0}">0</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" th:text="${kycStats.verified ?: 0}">0</div>
+                <div class="stat-label">Verified</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" th:text="${kycStats.rejected ?: 0}">0</div>
+                <div class="stat-label">Rejected</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <h2 class="filters-title">Filter Customers</h2>
+            <form method="get" action="/admin/dashboard">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">Search</label>
+                        <input type="text" name="search" class="filter-input" 
+                               placeholder="Search by name, email, or phone..." 
+                               th:value="${search}">
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">KYC Status</label>
+                        <select name="kycStatus" class="filter-select">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING" th:selected="${kycStatus == 'PENDING'}">Pending</option>
+                            <option value="VERIFIED" th:selected="${kycStatus == 'VERIFIED'}">Verified</option>
+                            <option value="REJECTED" th:selected="${kycStatus == 'REJECTED'}">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button type="submit" class="filter-btn">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="customers-section">
+            <div class="customers-header">
+                <h2 class="customers-title">Customer Management</h2>
+            </div>
+
+            <div th:if="${customers != null and !customers.empty}">
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>KYC Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="customer : ${customers}">
+                            <td th:text="${customer.customerId}">123</td>
+                            <td th:text="${customer.fullName}">John Doe</td>
+                            <td th:text="${customer.email}">john@example.com</td>
+                            <td th:text="${customer.phone}">+91 9876543210</td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${customer.kycStatus == 'PENDING'} ? 'status-pending' : 
+                                                     (${customer.kycStatus == 'VERIFIED'} ? 'status-verified' : 'status-rejected')"
+                                      th:text="${customer.kycStatus}">Pending</span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/customer/{id}(id=${customer.customerId})}" 
+                                   class="action-btn action-btn-primary">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:if="${customers == null or customers.empty}" class="no-customers">
+                <div class="no-customers-icon">📋</div>
+                <h3>No customers found</h3>
+                <p>No customers match your current filter criteria.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/admin/login';
+                return;
+            }
+
+            // Add token to all requests
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+                return originalFetch(url, options);
+            };
+
+            // Set admin username if available
+            const adminUsername = localStorage.getItem('adminUsername') || 'Administrator';
+            document.getElementById('adminUsername').textContent = adminUsername;
+        });
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminRole');
+            localStorage.removeItem('adminUserId');
+            localStorage.removeItem('adminUsername');
+            window.location.href = '/admin/login';
+        }
+
+        // Auto-refresh stats every 30 seconds
+        setInterval(function() {
+            fetch('/admin/dashboard', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Session expired');
+                }
+                // You could update stats here if you return JSON
+            })
+            .catch(err => {
+                console.error('Auto-refresh failed:', err);
+                if (err.message === 'Session expired') {
+                    logout();
+                }
+            });
+        }, 30000);
+    </script>
+</body>
+</html>

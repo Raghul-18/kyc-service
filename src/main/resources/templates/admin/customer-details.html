@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Details - KYC Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F8F9FA;
+            color: #2C3E50;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #FFFFFF;
+            border-bottom: 1px solid #E9ECEF;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: #6C757D;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-right: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #5A6268;
+            color: white;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .customer-info {
+            background: #FFFFFF;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border: 1px solid #E9ECEF;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #0466c8;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6C757D;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #2C3E50;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .status-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-verified {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        .kyc-section {
+            background: #FFFFFF;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #E9ECEF;
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .document-card {
+            border: 2px solid #E9ECEF;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .document-card.verified {
+            border-color: #28A745;
+        }
+
+        .document-card.rejected {
+            border-color: #DC3545;
+        }
+
+        .document-card.pending {
+            border-color: #FFC107;
+        }
+
+        .document-header {
+            padding: 1rem;
+            background: #F8F9FA;
+            border-bottom: 1px solid #E9ECEF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .document-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .document-body {
+            padding: 1.5rem;
+        }
+
+        .document-info {
+            margin-bottom: 1rem;
+        }
+
+        .document-label {
+            font-size: 0.75rem;
+            color: #6C757D;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .document-value {
+            font-size: 0.875rem;
+            color: #2C3E50;
+            margin-bottom: 0.75rem;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-view {
+            background: #6C757D;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #5A6268;
+            color: white;
+        }
+
+        .btn-verify {
+            background: #28A745;
+            color: white;
+        }
+
+        .btn-verify:hover {
+            background: #218838;
+        }
+
+        .btn-reject {
+            background: #DC3545;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #C82333;
+        }
+
+        .btn-approve-customer {
+            background: #0466c8;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            margin-top: 2rem;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-approve-customer:hover {
+            background: #0353a4;
+        }
+
+        .btn-approve-customer:disabled {
+            background: #6C757D;
+            cursor: not-allowed;
+        }
+
+        .no-document {
+            text-align: center;
+            padding: 2rem;
+            color: #6C757D;
+            border: 2px dashed #E9ECEF;
+            border-radius: 12px;
+        }
+
+        .no-document-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid;
+        }
+
+        .alert-success {
+            background: #D4EDDA;
+            border-color: #C3E6CB;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #F8D7DA;
+            border-color: #F5C6CB;
+            color: #721C24;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #FFFFFF;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #E9ECEF;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6C757D;
+        }
+
+        .close:hover {
+            color: #2C3E50;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2C3E50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #E9ECEF;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            resize: vertical;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #0466c8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .documents-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .document-actions {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <a href="/admin/dashboard" class="back-btn">← Back to Dashboard</a>
+            <div class="header-title">Customer Details</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Customer Information -->
+        <div class="customer-info">
+            <h2 class="section-title">Customer Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Customer ID</div>
+                    <div class="info-value" th:text="${customer.customerId}">12345</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value" th:text="${customer.fullName}">John Doe</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value" th:text="${customer.email}">john@example.com</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Phone</div>
+                    <div class="info-value" th:text="${customer.phone}">+91 9876543210</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Address</div>
+                    <div class="info-value" th:text="${customer.address}">123 Main Street, City</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">PAN Number</div>
+                    <div class="info-value" th:text="${customer.pan}">ABCDE1234F</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Aadhaar Number</div>
+                    <div class="info-value" th:text="${customer.aadhaar}">1234 5678 9012</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">KYC Status</div>
+                    <div class="info-value">
+                        <span class="status-badge"
+                              th:classappend="${customer.kycStatus == 'PENDING'} ? 'status-pending' : 
+                                             (${customer.kycStatus == 'VERIFIED'} ? 'status-verified' : 'status-rejected')"
+                              th:text="${customer.kycStatus}">PENDING</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KYC Documents -->
+        <div class="kyc-section">
+            <h2 class="section-title">KYC Document Verification</h2>
+            
+            <div class="documents-grid">
+                <!-- Aadhaar Card -->
+                <div class="document-card" 
+                     th:classappend="${documentMap['AADHAR'] != null} ? ${documentMap['AADHAR'].status.toString().toLowerCase()} : 'pending'">
+                    <div class="document-header">
+                        <div class="document-title">Aadhaar Card</div>
+                        <div class="document-status"
+                             th:classappend="${documentMap['AADHAR'] != null} ? ${documentMap['AADHAR'].status.toString().toLowerCase()} : 'pending'"
+                             th:text="${documentMap['AADHAR'] != null} ? ${documentMap['AADHAR'].status} : 'NOT_UPLOADED'">
+                            NOT_UPLOADED
+                        </div>
+                    </div>
+                    <div class="document-body">
+                        <div th:if="${documentMap['AADHAR'] != null}">
+                            <div class="document-info">
+                                <div class="document-label">Uploaded Date</div>
+                                <div class="document-value" th:text="${#temporals.format(documentMap['AADHAR'].uploadedAt, 'dd MMM yyyy, HH:mm')}">
+                                    01 Jan 2024, 10:30
+                                </div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['AADHAR'].message}">
+                                <div class="document-label">Message</div>
+                                <div class="document-value" th:text="${documentMap['AADHAR'].message}">Document message</div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['AADHAR'].verifiedBy}">
+                                <div class="document-label">Verified By</div>
+                                <div class="document-value" th:text="${documentMap['AADHAR'].verifiedBy}">admin</div>
+                            </div>
+                            <div class="document-actions">
+                                <a th:href="@{/api/kyc/document/{id}/download(id=${documentMap['AADHAR'].documentId})}" 
+                                   class="btn btn-view" target="_blank">View Document</a>
+                                <button class="btn btn-verify" 
+                                        th:onclick="'openVerifyModal(' + ${documentMap['AADHAR'].documentId} + ', \'AADHAR\')'"
+                                        th:if="${documentMap['AADHAR'].status.toString() != 'VERIFIED'}">
+                                    Verify
+                                </button>
+                                <button class="btn btn-reject" 
+                                        th:onclick="'openRejectModal(' + ${documentMap['AADHAR'].documentId} + ', \'AADHAR\')'"
+                                        th:if="${documentMap['AADHAR'].status.toString() != 'REJECTED'}">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                        <div th:if="${documentMap['AADHAR'] == null}" class="no-document">
+                            <div class="no-document-icon">📄</div>
+                            <p>Aadhaar document not uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAN Card -->
+                <div class="document-card" 
+                     th:classappend="${documentMap['PAN'] != null} ? ${documentMap['PAN'].status.toString().toLowerCase()} : 'pending'">
+                    <div class="document-header">
+                        <div class="document-title">PAN Card</div>
+                        <div class="document-status"
+                             th:classappend="${documentMap['PAN'] != null} ? ${documentMap['PAN'].status.toString().toLowerCase()} : 'pending'"
+                             th:text="${documentMap['PAN'] != null} ? ${documentMap['PAN'].status} : 'NOT_UPLOADED'">
+                            NOT_UPLOADED
+                        </div>
+                    </div>
+                    <div class="document-body">
+                        <div th:if="${documentMap['PAN'] != null}">
+                            <div class="document-info">
+                                <div class="document-label">Uploaded Date</div>
+                                <div class="document-value" th:text="${#temporals.format(documentMap['PAN'].uploadedAt, 'dd MMM yyyy, HH:mm')}">
+                                    01 Jan 2024, 10:30
+                                </div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['PAN'].message}">
+                                <div class="document-label">Message</div>
+                                <div class="document-value" th:text="${documentMap['PAN'].message}">Document message</div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['PAN'].verifiedBy}">
+                                <div class="document-label">Verified By</div>
+                                <div class="document-value" th:text="${documentMap['PAN'].verifiedBy}">admin</div>
+                            </div>
+                            <div class="document-actions">
+                                <a th:href="@{/api/kyc/document/{id}/download(id=${documentMap['PAN'].documentId})}" 
+                                   class="btn btn-view" target="_blank">View Document</a>
+                                <button class="btn btn-verify" 
+                                        th:onclick="'openVerifyModal(' + ${documentMap['PAN'].documentId} + ', \'PAN\')'"
+                                        th:if="${documentMap['PAN'].status.toString() != 'VERIFIED'}">
+                                    Verify
+                                </button>
+                                <button class="btn btn-reject" 
+                                        th:onclick="'openRejectModal(' + ${documentMap['PAN'].documentId} + ', \'PAN\')'"
+                                        th:if="${documentMap['PAN'].status.toString() != 'REJECTED'}">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                        <div th:if="${documentMap['PAN'] == null}" class="no-document">
+                            <div class="no-document-icon">📄</div>
+                            <p>PAN document not uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo -->
+                <div class="document-card" 
+                     th:classappend="${documentMap['PHOTO'] != null} ? ${documentMap['PHOTO'].status.toString().toLowerCase()} : 'pending'">
+                    <div class="document-header">
+                        <div class="document-title">Photograph</div>
+                        <div class="document-status"
+                             th:classappend="${documentMap['PHOTO'] != null} ? ${documentMap['PHOTO'].status.toString().toLowerCase()} : 'pending'"
+                             th:text="${documentMap['PHOTO'] != null} ? ${documentMap['PHOTO'].status} : 'NOT_UPLOADED'">
+                            NOT_UPLOADED
+                        </div>
+                    </div>
+                    <div class="document-body">
+                        <div th:if="${documentMap['PHOTO'] != null}">
+                            <div class="document-info">
+                                <div class="document-label">Uploaded Date</div>
+                                <div class="document-value" th:text="${#temporals.format(documentMap['PHOTO'].uploadedAt, 'dd MMM yyyy, HH:mm')}">
+                                    01 Jan 2024, 10:30
+                                </div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['PHOTO'].message}">
+                                <div class="document-label">Message</div>
+                                <div class="document-value" th:text="${documentMap['PHOTO'].message}">Document message</div>
+                            </div>
+                            <div class="document-info" th:if="${documentMap['PHOTO'].verifiedBy}">
+                                <div class="document-label">Verified By</div>
+                                <div class="document-value" th:text="${documentMap['PHOTO'].verifiedBy}">admin</div>
+                            </div>
+                            <div class="document-actions">
+                                <a th:href="@{/api/kyc/document/{id}/download(id=${documentMap['PHOTO'].documentId})}" 
+                                   class="btn btn-view" target="_blank">View Document</a>
+                                <button class="btn btn-verify" 
+                                        th:onclick="'openVerifyModal(' + ${documentMap['PHOTO'].documentId} + ', \'PHOTO\')'"
+                                        th:if="${documentMap['PHOTO'].status.toString() != 'VERIFIED'}">
+                                    Verify
+                                </button>
+                                <button class="btn btn-reject" 
+                                        th:onclick="'openRejectModal(' + ${documentMap['PHOTO'].documentId} + ', \'PHOTO\')'"
+                                        th:if="${documentMap['PHOTO'].status.toString() != 'REJECTED'}">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                        <div th:if="${documentMap['PHOTO'] == null}" class="no-document">
+                            <div class="no-document-icon">📷</div>
+                            <p>Photograph not uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approve Customer Button -->
+            <button class="btn btn-approve-customer" 
+                    th:disabled="${!allDocumentsVerified}"
+                    th:onclick="'approveCustomer(' + ${customer.customerId} + ')'"
+                    th:text="${allDocumentsVerified} ? 'Approve Customer KYC' : 'All documents must be verified first'">
+                Approve Customer KYC
+            </button>
+        </div>
+    </div>
+
+    <!-- Verify Modal -->
+    <div id="verifyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Verify Document</h3>
+                <span class="close" onclick="closeModal('verifyModal')">&times;</span>
+            </div>
+            <form id="verifyForm">
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <input type="text" id="verifyDocType" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Verification Message</label>
+                    <textarea id="verifyMessage" class="form-control" rows="3" 
+                              placeholder="Enter verification comments...">Document verified successfully</textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-verify" style="width: 100%;">
+                        Verify Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Reject Document</h3>
+                <span class="close" onclick="closeModal('rejectModal')">&times;</span>
+            </div>
+            <form id="rejectForm">
+                <div class="form-group">
+                    <label class="form-label">Document Type</label>
+                    <input type="text" id="rejectDocType" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rejection Reason *</label>
+                    <textarea id="rejectMessage" class="form-control" rows="3" 
+                              placeholder="Please specify the reason for rejection..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-reject" style="width: 100%;">
+                        Reject Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentDocumentId = null;
+
+        // Authentication check
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/admin/login';
+                return;
+            }
+
+            // Add token to all requests
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = 'Bearer ' + token;
+                return originalFetch(url, options);
+            };
+        });
+
+        function openVerifyModal(documentId, docType) {
+            currentDocumentId = documentId;
+            document.getElementById('verifyDocType').value = docType;
+            document.getElementById('verifyModal').style.display = 'block';
+        }
+
+        function openRejectModal(documentId, docType) {
+            currentDocumentId = documentId;
+            document.getElementById('rejectDocType').value = docType;
+            document.getElementById('rejectMessage').value = '';
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            currentDocumentId = null;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const verifyModal = document.getElementById('verifyModal');
+            const rejectModal = document.getElementById('rejectModal');
+            if (event.target === verifyModal) {
+                closeModal('verifyModal');
+            }
+            if (event.target === rejectModal) {
+                closeModal('rejectModal');
+            }
+        }
+
+        // Handle verify form submission
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = document.getElementById('verifyMessage').value;
+            
+            if (!currentDocumentId) return;
+
+            const formData = new FormData();
+            formData.append('message', message);
+
+            fetch(`/admin/verify-document/${currentDocumentId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Document verified successfully!', 'success');
+                    closeModal('verifyModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Verification failed', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Verification error:', err);
+                showAlert('Verification failed', 'error');
+            });
+        });
+
+        // Handle reject form submission
+        document.getElementById('rejectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = document.getElementById('rejectMessage').value;
+            
+            if (!currentDocumentId || !message.trim()) return;
+
+            const formData = new FormData();
+            formData.append('message', message);
+
+            fetch(`/admin/reject-document/${currentDocumentId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Document rejected successfully!', 'success');
+                    closeModal('rejectModal');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Rejection failed', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Rejection error:', err);
+                showAlert('Rejection failed', 'error');
+            });
+        });
+
+        function approveCustomer(customerId) {
+            if (!confirm('Are you sure you want to approve this customer\'s KYC? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch(`/admin/approve-customer/${customerId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Customer KYC approved successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Approval failed', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Approval error:', err);
+                showAlert('Approval failed', 'error');
+            });
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+                        

@@ -30,6 +30,12 @@ spring:
     clean-disabled: false
     validate-on-migrate: true
 
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    cache: false
+
 springdoc:
   api-docs:
     path: /swagger-docs
@@ -50,3 +56,11 @@ logging:
 jwt:
   secret: bXlfc3VwZXJfc2VjdXJlX3Rlc3Rfa2V5XzEyMzQ1Njc4OTA=  # Base64 of 32-byte key
   expiration-ms: 3600000
+
+# Customer Service Integration
+customer:
+  service:
+    url: http://localhost:8081
+
+# Thymeleaf Configuration
+
