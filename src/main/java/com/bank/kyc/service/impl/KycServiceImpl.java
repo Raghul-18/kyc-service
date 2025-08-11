@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.bank.kyc.enums.DocumentStatus;
 
 @Slf4j
 @Service
@@ -207,9 +206,9 @@ public class KycServiceImpl implements KycService {
         log.info("📊 Fetching structured KYC statistics");
 
         long total = repository.count();
-        long pending = repository.countByStatus(DocumentStatus.PENDING);
-        long verified = repository.countByStatus(DocumentStatus.VERIFIED);
-        long rejected = repository.countByStatus(DocumentStatus.REJECTED);
+        long pending = repository.countByStatus(VerificationStatus.PENDING);
+        long verified = repository.countByStatus(VerificationStatus.VERIFIED);
+        long rejected = repository.countByStatus(VerificationStatus.REJECTED);
 
         KycStatsDTO stats = KycStatsDTO.builder()
                 .total(total)

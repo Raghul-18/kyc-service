@@ -240,7 +240,7 @@
     <span id="errorMessage">Invalid credentials. Please try again.</span>
   </div>
 
-  <form id="loginForm">
+  <form id="loginForm" action="javascript:void(0)" method="post">
     <div class="form-group">
       <label for="username" class="form-label">
         Username <span class="required">*</span>
@@ -322,23 +322,18 @@
       password: passwordInput.value
     };
 
-    // Login via KYC service (port 8084) - UPDATED ENDPOINT
-    fetch('http://localhost:8084/admin/login', {
+    // Send credentials and let the server set the HttpOnly cookie
+    fetch('http://localhost:8084/api/auth/admin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin', // Important for cookie auth
       body: JSON.stringify(payload)
     })
             .then(response => {
               if (!response.ok) throw new Error('Invalid credentials');
               return response.json();
             })
-            .then(data => {
-              // Store JWT token
-              localStorage.setItem('adminToken', data.token);
-              localStorage.setItem('adminRole', data.role);
-              localStorage.setItem('adminUserId', data.userId);
-              localStorage.setItem('adminUsername', data.username);
-
+            .then(() => {
               // Redirect to KYC service dashboard
               window.location.href = '/admin/dashboard';
             })
@@ -399,25 +394,17 @@
 
   // Check if already logged in
   document.addEventListener('DOMContentLoaded', function () {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      // Verify token is still valid
-      fetch('/admin/dashboard')
-              .then(response => {
-                if (response.ok) {
-                  window.location.href = '/admin/dashboard';
-                }
-              })
-              .catch(() => {
-                // Token invalid, stay on login page
-                localStorage.removeItem('adminToken');
-                localStorage.removeItem('adminRole');
-                localStorage.removeItem('adminUserId');
-                localStorage.removeItem('adminUsername');
-              });
-    }
+    fetch('/admin/dashboard', { credentials: 'same-origin' })
+            .then(response => {
+              if (response.ok) {
+                window.location.href = '/admin/dashboard';
+              }
+            })
+            .catch(() => {
+              // stay on page if not authenticated
+            });
   });
 </script>
-
 </body>
+
 </html>

@@ -1,12 +1,15 @@
 package com.bank.kyc.controller;
 
+import com.bank.kyc.entity.User;
 import com.bank.kyc.service.KycService;
 import com.bank.kyc.service.CustomerIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Map;
 
 @RestController
@@ -20,6 +23,21 @@ public class AdminKYCController {
     @Autowired
     private CustomerIntegrationService customerIntegrationService;
 
+    // Helper method to get current authenticated user
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    private String extractJwtFromRequest(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (var cookie : request.getCookies()) {
+            if ("ADMIN_JWT".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
     @PostMapping("/verify-document/{documentId}")
     public ResponseEntity<?> verifyDocument(
             @PathVariable Long documentId,
@@ -27,7 +45,8 @@ public class AdminKYCController {
 
         try {
             String message = request.getParameter("message");
-            String adminUsername = getAdminUsernameFromToken(request);
+            User currentUser = getCurrentUser();
+            String adminUsername = currentUser.getUsername();
 
             kycService.verifyDocument(documentId, message, adminUsername);
 
@@ -50,7 +69,8 @@ public class AdminKYCController {
 
         try {
             String message = request.getParameter("message");
-            String adminUsername = getAdminUsernameFromToken(request);
+            User currentUser = getCurrentUser();
+            String adminUsername = currentUser.getUsername();
 
             if (message == null || message.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -88,7 +108,10 @@ public class AdminKYCController {
                 ));
             }
 
-            customerIntegrationService.updateCustomerKYCStatus(customerId, "VERIFIED");
+            // Extract JWT token from cookie
+            String jwtToken = extractJwtFromRequest(request);
+
+            customerIntegrationService.updateCustomerKYCStatus(customerId, "VERIFIED", jwtToken);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -113,21 +136,5 @@ public class AdminKYCController {
                     "message", e.getMessage()
             ));
         }
-    }
-
-    private String getAdminUsernameFromToken(HttpServletRequest request) {
-        String token = extractTokenFromRequest(request);
-        if (token != null) {
-            return "admin"; // TODO: Implement JWT parsing
-        }
-        return "system";
-    }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
 }

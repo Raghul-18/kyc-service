@@ -345,19 +345,19 @@
         <!-- Statistics -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-number" th:text="${kycStats.total ?: 0}">0</div>
+                <div class="stat-number" th:text="${kycStats?.total ?: 0}">0</div>
                 <div class="stat-label">Total Documents</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" th:text="${kycStats.pending ?: 0}">0</div>
+                <div class="stat-number" th:text="${kycStats?.pending ?: 0}">0</div>
                 <div class="stat-label">Pending Review</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" th:text="${kycStats.verified ?: 0}">0</div>
+                <div class="stat-number" th:text="${kycStats?.verified ?: 0}">0</div>
                 <div class="stat-label">Verified</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" th:text="${kycStats.rejected ?: 0}">0</div>
+                <div class="stat-number" th:text="${kycStats?.rejected ?: 0}">0</div>
                 <div class="stat-label">Rejected</div>
             </div>
         </div>

@@ -1,34 +1,69 @@
 package com.bank.kyc.config;
 
-import lombok.extern.slf4j.Slf4j;
+import com.bank.kyc.security.JwtTokenFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtTokenFilter jwtTokenFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        log.info("🔧 Configuring SecurityFilterChain without JwtAuthenticationFilter");
-
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/admin/login").permitAll()  // ✅ Allow access to admin login page
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // ✅ Static files
-                        .requestMatchers("/api/kyc/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/kyc/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .anyRequest().authenticated()
-                );
+                        // Public endpoints
+                        .requestMatchers(
+                                "/api/auth/admin-login",
+                                "/admin/login", // allow admin login page
+                                "/favicon.ico",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/error"
+                        ).permitAll()
 
-        log.info("✅ SecurityFilterChain configured successfully");
+                        // Admin area
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Admin API endpoints
+                        .requestMatchers("/api/kyc/admin/**").hasRole("ADMIN")
+
+                        // Customer & Admin API access
+                        .requestMatchers("/api/kyc/**").hasAnyRole("CUSTOMER", "ADMIN")
+
+                        // Token refresh endpoint
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").authenticated()
+
+                        // Everything else
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
 }

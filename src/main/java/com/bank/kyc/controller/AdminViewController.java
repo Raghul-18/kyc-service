@@ -3,22 +3,28 @@ package com.bank.kyc.controller;
 import com.bank.kyc.dto.CustomerDTO;
 import com.bank.kyc.dto.KycStatsDTO;
 import com.bank.kyc.entity.KycDocument;
+import com.bank.kyc.entity.User;
 import com.bank.kyc.service.AdminDashboardService;
 import com.bank.kyc.service.CustomerIntegrationService;
 import com.bank.kyc.service.KycService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Controller
 @RequestMapping("/admin")
 public class AdminViewController {
@@ -32,9 +38,22 @@ public class AdminViewController {
     @Autowired
     private KycService kycDocumentService;
 
-    @GetMapping("/login")
-    public String showLoginPage() {
-        return "admin/login";
+    private User getCurrentUser() {
+        try {
+            return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String extractJwtFromRequest(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if ("ADMIN_JWT".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 
     @GetMapping("/dashboard")
@@ -46,20 +65,30 @@ public class AdminViewController {
             Model model,
             HttpServletRequest request) {
 
-        // Validate admin authentication
-        if (!isAdminAuthenticated(request)) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null || !"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
             return "redirect:/admin/login";
         }
 
+        KycStatsDTO kycStats = createDefaultKycStats();
         try {
-            // Get KYC Statistics
-            KycStatsDTO kycStats = adminDashboardService.getKYCStatistics();
-            model.addAttribute("kycStats", kycStats);
+            KycStatsDTO realStats = adminDashboardService.getKYCStatistics();
+            if (realStats != null) {
+                kycStats = realStats;
+            }
+        } catch (Exception e) {
+            log.error("Failed to load KYC statistics, using defaults", e);
+            model.addAttribute("statsError", "Unable to load statistics");
+        }
+        model.addAttribute("kycStats", kycStats);
 
-            // Get customers with filtering
+        try {
             Pageable pageable = PageRequest.of(page, size);
+
+            String jwtToken = extractJwtFromRequest(request);
+
             Page<CustomerDTO> customersPage = customerIntegrationService.getCustomersWithFilters(
-                    search, kycStatus, pageable);
+                    search, kycStatus, pageable, jwtToken);
 
             model.addAttribute("customers", customersPage.getContent());
             model.addAttribute("totalPages", customersPage.getTotalPages());
@@ -68,7 +97,11 @@ public class AdminViewController {
             model.addAttribute("kycStatus", kycStatus);
 
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to load dashboard data");
+            log.error("Failed to load customer data", e);
+            model.addAttribute("error", "Failed to load customer data");
+            model.addAttribute("customers", Collections.emptyList());
+            model.addAttribute("totalPages", 0);
+            model.addAttribute("currentPage", 0);
         }
 
         return "admin/dashboard";
@@ -80,23 +113,22 @@ public class AdminViewController {
             Model model,
             HttpServletRequest request) {
 
-        // Validate admin authentication
-        if (!isAdminAuthenticated(request)) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null || !"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
             return "redirect:/admin/login";
         }
 
         try {
-            // Get customer details
-            CustomerDTO customer = customerIntegrationService.getCustomerById(customerId);
+            String jwtToken = extractJwtFromRequest(request);
+
+            CustomerDTO customer = customerIntegrationService.getCustomerById(customerId, jwtToken);
             if (customer == null) {
                 model.addAttribute("error", "Customer not found");
                 return "admin/dashboard";
             }
 
-            // Get customer's KYC documents
             List<KycDocument> documents = kycDocumentService.getDocumentsByCustomerId(customerId);
 
-            // Create document map for easy access in template
             Map<String, KycDocument> documentMap = documents.stream()
                     .collect(Collectors.toMap(
                             doc -> doc.getDocumentType().toString(),
@@ -104,7 +136,6 @@ public class AdminViewController {
                             (existing, replacement) -> replacement
                     ));
 
-            // Check if all required documents are verified
             boolean allDocumentsVerified = isAllDocumentsVerified(documentMap);
 
             model.addAttribute("customer", customer);
@@ -112,6 +143,7 @@ public class AdminViewController {
             model.addAttribute("allDocumentsVerified", allDocumentsVerified);
 
         } catch (Exception e) {
+            log.error("Failed to load customer details for customerId: {}", customerId, e);
             model.addAttribute("error", "Failed to load customer details");
             return "admin/dashboard";
         }
@@ -119,23 +151,8 @@ public class AdminViewController {
         return "admin/customer-details";
     }
 
-    private boolean isAdminAuthenticated(HttpServletRequest request) {
-        // This would be implemented based on your JWT validation logic
-        String token = extractTokenFromRequest(request);
-        return token != null; // Simplified check - implement proper JWT validation
-    }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
-
     private boolean isAllDocumentsVerified(Map<String, KycDocument> documentMap) {
         String[] requiredTypes = {"AADHAR", "PAN", "PHOTO"};
-
         for (String type : requiredTypes) {
             KycDocument doc = documentMap.get(type);
             if (doc == null || !doc.getStatus().toString().equals("VERIFIED")) {
@@ -143,5 +160,14 @@ public class AdminViewController {
             }
         }
         return true;
+    }
+
+    private KycStatsDTO createDefaultKycStats() {
+        return KycStatsDTO.builder()
+                .total(0L)
+                .pending(0L)
+                .verified(0L)
+                .rejected(0L)
+                .build();
     }
 }

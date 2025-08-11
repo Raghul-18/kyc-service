@@ -2,18 +2,16 @@ package com.bank.kyc.controller;
 
 import com.bank.kyc.client.CustomerServiceClient;
 import com.bank.kyc.dto.KycDocumentResponse;
-import com.bank.kyc.security.JwtAuthInterceptor;
+import com.bank.kyc.entity.User;
 import com.bank.kyc.service.KycService;
-import com.bank.kyc.util.AuthenticatedUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-
 
 import java.io.IOException;
 import java.util.List;
@@ -27,6 +25,11 @@ public class KycController {
     private final KycService kycService;
     private final CustomerServiceClient customerServiceClient;
 
+    // Helper method to get current authenticated user
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     // 🔄 UPDATED: Auto-resolve customerId from JWT
     @PostMapping("/upload")
     public ResponseEntity<KycDocumentResponse> upload(
@@ -34,7 +37,7 @@ public class KycController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request
     ) {
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
         Long userId = currentUser.getUserId();
 
         // 🔄 Resolve userId to customerId
@@ -52,7 +55,7 @@ public class KycController {
     // 🔄 UPDATED: Auto-resolve customerId for own documents
     @GetMapping("/my-documents")
     public ResponseEntity<List<KycDocumentResponse>> getMyDocuments(HttpServletRequest request) {
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
         Long userId = currentUser.getUserId();
 
         // Resolve userId to customerId
@@ -69,7 +72,7 @@ public class KycController {
     // 🔄 UPDATED: Access control for document downloads
     @GetMapping("/document/{documentId}/download")
     public void download(@PathVariable Long documentId, HttpServletResponse response, HttpServletRequest request) throws IOException {
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         if ("ADMIN".equalsIgnoreCase(currentUser.getRole())) {
             // Admin can download any document
@@ -96,7 +99,7 @@ public class KycController {
 
     @DeleteMapping("/document/{documentId}")
     public ResponseEntity<Void> delete(@PathVariable Long documentId, HttpServletRequest request) {
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         if ("ADMIN".equalsIgnoreCase(currentUser.getRole())) {
             kycService.deleteDocument(documentId, currentUser.getUsername());
@@ -141,7 +144,7 @@ public class KycController {
             @RequestParam(required = false) String message
     ) {
         validateAdmin();
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
         String adminUsername = currentUser.getUsername();
 
         return ResponseEntity.ok(kycService.updateStatus(
@@ -156,7 +159,7 @@ public class KycController {
             @RequestParam String message
     ) {
         validateAdmin();
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
         String adminUsername = currentUser.getUsername();
 
         return ResponseEntity.ok(kycService.updateStatus(documentId, "REJECTED", message, adminUsername));
@@ -170,7 +173,7 @@ public class KycController {
 
     // Helper method to validate admin access
     private void validateAdmin() {
-        AuthenticatedUser currentUser = JwtAuthInterceptor.getCurrentUser();
+        User currentUser = getCurrentUser();
         if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
             throw new SecurityException("Only ADMIN can access this endpoint");
         }

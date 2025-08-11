@@ -3,9 +3,12 @@ package com.bank.kyc.service;
 import com.bank.kyc.dto.KycStatsDTO;
 import com.bank.kyc.enums.DocumentStatus;
 import com.bank.kyc.repository.KycDocumentRepository;
+import com.bank.kyc.util.VerificationStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AdminDashboardService {
 
@@ -13,24 +16,52 @@ public class AdminDashboardService {
     private KycDocumentRepository kycDocumentRepository;
 
     public KycStatsDTO getKYCStatistics() {
-        long total = kycDocumentRepository.count();
-        long pending = kycDocumentRepository.countByStatus(DocumentStatus.PENDING);
-        long verified = kycDocumentRepository.countByStatus(DocumentStatus.VERIFIED);
-        long rejected = kycDocumentRepository.countByStatus(DocumentStatus.REJECTED);
+        try {
+            log.debug("Fetching KYC statistics...");
 
-        return KycStatsDTO.builder()
-                .total(total)
-                .pending(pending)
-                .verified(verified)
-                .rejected(rejected)
-                .build();
+            long total = kycDocumentRepository.count();
+            long pending = kycDocumentRepository.countByStatus(VerificationStatus.PENDING);
+            long verified = kycDocumentRepository.countByStatus(VerificationStatus.VERIFIED);
+            long rejected = kycDocumentRepository.countByStatus(VerificationStatus.REJECTED);
+
+            log.debug("KYC Stats - Total: {}, Pending: {}, Verified: {}, Rejected: {}",
+                    total, pending, verified, rejected);
+
+            return KycStatsDTO.builder()
+                    .total(total)
+                    .pending(pending)
+                    .verified(verified)
+                    .rejected(rejected)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error fetching KYC statistics from repository", e);
+
+            // Return default stats instead of null
+            return KycStatsDTO.builder()
+                    .total(0L)
+                    .pending(0L)
+                    .verified(0L)
+                    .rejected(0L)
+                    .build();
+        }
     }
 
     public long getTotalCustomersWithDocuments() {
-        return kycDocumentRepository.countDistinctCustomers();
+        try {
+            return kycDocumentRepository.countDistinctCustomers();
+        } catch (Exception e) {
+            log.error("Error fetching total customers count", e);
+            return 0L;
+        }
     }
 
     public long getPendingVerificationsCount() {
-        return kycDocumentRepository.countByStatus(DocumentStatus.PENDING);
+        try {
+            return kycDocumentRepository.countByStatus(VerificationStatus.PENDING);
+        } catch (Exception e) {
+            log.error("Error fetching pending verifications count", e);
+            return 0L;
+        }
     }
 }

@@ -45,22 +45,20 @@ springdoc:
     tagsSorter: alpha
     tryItOutEnabled: true
 
-# Enable debug logging
 logging:
   level:
-    org.flywaydb: DEBUG
+    root: INFO
     org.springframework.security: DEBUG
-    com.bank.kyc.security: DEBUG  # Add this line for your JWT filter
-    com.bank.kyc: DEBUG           # Add this for all your application logs
+    org.flywaydb: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.bank.kyc: DEBUG
+
 
 jwt:
-  secret: bXlfc3VwZXJfc2VjdXJlX3Rlc3Rfa2V5XzEyMzQ1Njc4OTA=  # Base64 of 32-byte key
+  secret: bXlfc3VwZXJfc2VjdXJlX3Rlc3Rfa2V5XzEyMzQ1Njc4OTA=
   expiration-ms: 3600000
 
-# Customer Service Integration
 customer:
   service:
     url: http://localhost:8081
-
-# Thymeleaf Configuration
-
