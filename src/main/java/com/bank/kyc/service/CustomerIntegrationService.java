@@ -1,6 +1,8 @@
 package com.bank.kyc.service;
 
 import com.bank.kyc.dto.CustomerDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -16,7 +18,7 @@ import java.util.Map;
 
 @Service
 public class CustomerIntegrationService {
-
+    private static final Logger log = LoggerFactory.getLogger(CustomerIntegrationService.class);
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${customer.service.url:http://localhost:8081}")
@@ -33,21 +35,26 @@ public class CustomerIntegrationService {
 
     public CustomerDTO getCustomerById(Long customerId, String jwtToken) {
         try {
-            // ✅ FIXED: Using admin endpoint instead of regular customer endpoint
             String url = customerServiceUrl + "/api/customers/admin/" + customerId;
-            System.out.println("🔍 DEBUG: Calling Customer Service: " + url);
+            log.debug("Calling Customer Service: {}", url);
 
             HttpEntity<Void> entity = new HttpEntity<>(createHeadersWithJwt(jwtToken));
             ResponseEntity<CustomerDTO> response = restTemplate.exchange(url, HttpMethod.GET, entity, CustomerDTO.class);
 
-            System.out.println("✅ DEBUG: Customer Service Response: " + response.getStatusCode());
-            return response.getBody();
+            CustomerDTO customer = response.getBody();
+            if (customer != null) {
+                log.info("Fetched customer: ID={}, KYC status={}", customerId, customer.getKycStatus());
+            } else {
+                log.warn("Customer with ID {} not found", customerId);
+            }
+            return customer;
+
         } catch (Exception e) {
-            System.err.println("❌ DEBUG: Customer Service Error: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Customer Service Error: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to fetch customer details: " + e.getMessage());
         }
     }
+
 
     // Use admin endpoint /api/customers/admin/all with pagination and optional filters (search, kycStatus)
     public Page<CustomerDTO> getCustomersWithFilters(String search, String kycStatus, Pageable pageable, String jwtToken) {
