@@ -13,28 +13,39 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenFilter jwtTokenFilter;
+    private final CorsConfigurationSource corsConfigurationSource; // Inject CorsConfig bean
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // ✅ Enable CORS with custom config
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
                                 "/api/auth/admin-login",
-                                "/admin/login", // allow admin login page
+                                "/admin/login",
                                 "/favicon.ico",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/error"
+                                "/error",
+                                // Swagger endpoints
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-docs/**",
+                                "/swagger-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
 
                         // Admin area
