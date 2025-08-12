@@ -694,23 +694,6 @@
     <script>
         let currentDocumentId = null;
 
-        // Authentication check
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('adminToken');
-            if (!token) {
-                window.location.href = '/admin/login';
-                return;
-            }
-
-            // Add token to all requests
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options = {}) {
-                options.headers = options.headers || {};
-                options.headers['Authorization'] = 'Bearer ' + token;
-                return originalFetch(url, options);
-            };
-        });
-
         function openVerifyModal(documentId, docType) {
             currentDocumentId = documentId;
             document.getElementById('verifyDocType').value = docType;
@@ -802,27 +785,42 @@
         });
 
         function approveCustomer(customerId) {
-            if (!confirm('Are you sure you want to approve this customer\'s KYC? This action cannot be undone.')) {
+            if (!confirm("Are you sure you want to approve this customer's KYC? This action cannot be undone.")) {
                 return;
             }
 
+            // Call your 8084 proxy endpoint (no JWT handling here)
             fetch(`/admin/approve-customer/${customerId}`, {
-                method: 'POST'
+                method: 'PUT'
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('Customer KYC approved successfully!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showAlert(data.message || 'Approval failed', 'error');
-                }
-            })
-            .catch(err => {
-                console.error('Approval error:', err);
-                showAlert('Approval failed', 'error');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Customer KYC approved successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showAlert(data.message || 'Approval failed', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error('Approval error:', err);
+                    showAlert('Approval failed', 'error');
+                });
         }
+
+
+        // Helper to read a cookie
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for(let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if(name === cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
 
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');

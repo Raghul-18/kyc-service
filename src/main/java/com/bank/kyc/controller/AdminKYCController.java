@@ -93,15 +93,10 @@ public class AdminKYCController {
         }
     }
 
-    @PostMapping("/approve-customer/{customerId}")
-    public ResponseEntity<?> approveCustomer(
-            @PathVariable Long customerId,
-            HttpServletRequest request) {
-
+    @PutMapping("/approve-customer/{customerId}")
+    public ResponseEntity<?> approveCustomer(@PathVariable Long customerId, HttpServletRequest request) {
         try {
-            boolean allVerified = kycService.areAllDocumentsVerified(customerId);
-
-            if (!allVerified) {
+            if (!kycService.areAllDocumentsVerified(customerId)) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "success", false,
                         "message", "All documents must be verified before approving customer"
@@ -111,6 +106,7 @@ public class AdminKYCController {
             // Extract JWT token from cookie
             String jwtToken = extractJwtFromRequest(request);
 
+            // ✅ Call PUT-based method with JSON body
             customerIntegrationService.updateCustomerKYCStatus(customerId, "VERIFIED", jwtToken);
 
             return ResponseEntity.ok(Map.of(
@@ -124,6 +120,8 @@ public class AdminKYCController {
             ));
         }
     }
+
+
 
     @GetMapping("/stats")
     public ResponseEntity<?> getKYCStatistics() {

@@ -33,11 +33,18 @@ public class CustomerIntegrationService {
 
     public CustomerDTO getCustomerById(Long customerId, String jwtToken) {
         try {
-            String url = customerServiceUrl + "/api/customers/" + customerId;
+            // ✅ FIXED: Using admin endpoint instead of regular customer endpoint
+            String url = customerServiceUrl + "/api/customers/admin/" + customerId;
+            System.out.println("🔍 DEBUG: Calling Customer Service: " + url);
+
             HttpEntity<Void> entity = new HttpEntity<>(createHeadersWithJwt(jwtToken));
             ResponseEntity<CustomerDTO> response = restTemplate.exchange(url, HttpMethod.GET, entity, CustomerDTO.class);
+
+            System.out.println("✅ DEBUG: Customer Service Response: " + response.getStatusCode());
             return response.getBody();
         } catch (Exception e) {
+            System.err.println("❌ DEBUG: Customer Service Error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch customer details: " + e.getMessage());
         }
     }
@@ -72,29 +79,50 @@ public class CustomerIntegrationService {
     }
 
     // Use admin endpoint for updating KYC status
+//    public void updateCustomerKYCStatus(Long customerId, String kycStatus, String jwtToken) {
+//        try {
+//            String url = customerServiceUrl + "/api/customers/admin/" + customerId + "/kyc-status";
+//
+//            Map<String, String> requestBody = Map.of("kycStatus", kycStatus);
+//            HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, createHeadersWithJwt(jwtToken));
+//
+//            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to update customer KYC status: " + e.getMessage());
+//        }
+//    }
     public void updateCustomerKYCStatus(Long customerId, String kycStatus, String jwtToken) {
         try {
             String url = customerServiceUrl + "/api/customers/admin/" + customerId + "/kyc-status";
-
             Map<String, String> requestBody = Map.of("kycStatus", kycStatus);
             HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, createHeadersWithJwt(jwtToken));
 
-            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+            System.out.println("➡️ Sending PUT request to update KYC status: " + url);
+            ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+            System.out.println("⬅️ Received response status: " + response.getStatusCode());
 
         } catch (Exception e) {
+            System.err.println("❌ Failed to update customer KYC status: " + e.getMessage());
             throw new RuntimeException("Failed to update customer KYC status: " + e.getMessage());
         }
     }
 
-    public Long getCustomerIdByUserId(Long userId, String jwtToken) {
+
+    public void approveCustomerKYC(Long customerId, String jwtToken) {
         try {
-            String url = customerServiceUrl + "/api/customers/user/" + userId + "/customer-id";
+            // Build the correct final URL
+            String url = customerServiceUrl + "/api/customers/" + customerId + "/kyc-status?status=VERIFIED";
+
             HttpEntity<Void> entity = new HttpEntity<>(createHeadersWithJwt(jwtToken));
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            Map<String, Object> body = response.getBody();
-            return Long.valueOf(body.get("customerId").toString());
+
+            restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+
+            System.out.println("✅ Customer KYC approved for customerId: " + customerId);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to resolve customer ID: " + e.getMessage());
+            System.err.println("❌ Failed to approve customer KYC: " + e.getMessage());
+            throw new RuntimeException("Failed to approve customer KYC: " + e.getMessage());
         }
     }
+
 }

@@ -113,43 +113,87 @@ public class AdminViewController {
             Model model,
             HttpServletRequest request) {
 
+        System.out.println("🔍 === DEBUG: Customer Details Request Started ===");
+        System.out.println("🔍 DEBUG: Customer ID: " + customerId);
+        System.out.println("🔍 DEBUG: Request URI: " + request.getRequestURI());
+        System.out.println("🔍 DEBUG: Request Method: " + request.getMethod());
+
         User currentUser = getCurrentUser();
+        System.out.println("🔍 DEBUG: Current user: " + (currentUser != null ? currentUser.getUsername() : "NULL"));
+        System.out.println("🔍 DEBUG: User role: " + (currentUser != null ? currentUser.getRole() : "NULL"));
+
         if (currentUser == null || !"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            System.out.println("❌ DEBUG: Auth failed - redirecting to login");
             return "redirect:/admin/login";
         }
 
         try {
             String jwtToken = extractJwtFromRequest(request);
+            System.out.println("🔍 DEBUG: JWT Token extracted: " + (jwtToken != null && !jwtToken.isEmpty() ? "YES" : "NO"));
 
+            if (jwtToken != null) {
+                System.out.println("🔍 DEBUG: JWT Token length: " + jwtToken.length());
+            }
+
+            System.out.println("🔍 DEBUG: About to call Customer Service...");
             CustomerDTO customer = customerIntegrationService.getCustomerById(customerId, jwtToken);
+            System.out.println("✅ DEBUG: Customer Service call completed");
+
             if (customer == null) {
+                System.out.println("❌ DEBUG: Customer is NULL");
                 model.addAttribute("error", "Customer not found");
                 return "admin/dashboard";
             }
 
+            System.out.println("✅ DEBUG: Customer found: " + customer.getFullName());
+
             List<KycDocument> documents = kycDocumentService.getDocumentsByCustomerId(customerId);
+            System.out.println("DEBUG: Retrieved docs from DB = " + documents.size());
+            for (KycDocument doc : documents) {
+                System.out.println("DEBUG: " + doc.getDocumentName() + " | " + doc.getStatus());
+            }
+            System.out.println("✅ DEBUG: Found " + documents.size() + " documents");
 
             Map<String, KycDocument> documentMap = documents.stream()
                     .collect(Collectors.toMap(
-                            doc -> doc.getDocumentType().toString(),
+                            doc -> doc.getDocumentName().toString(),
                             doc -> doc,
                             (existing, replacement) -> replacement
                     ));
+            System.out.println("DEBUG KEYS in documentMap:");
+            documentMap.keySet().forEach(k -> System.out.println("KEY = [" + k + "]"));
+
 
             boolean allDocumentsVerified = isAllDocumentsVerified(documentMap);
+            System.out.println("✅ DEBUG: All documents verified: " + allDocumentsVerified);
 
             model.addAttribute("customer", customer);
             model.addAttribute("documentMap", documentMap);
             model.addAttribute("allDocumentsVerified", allDocumentsVerified);
 
+            System.out.println("✅ DEBUG: Returning template: admin/customer-details");
+            return "admin/customer-details";
+
         } catch (Exception e) {
-            log.error("Failed to load customer details for customerId: {}", customerId, e);
-            model.addAttribute("error", "Failed to load customer details");
+            System.err.println("❌ DEBUG: Exception occurred: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("error", "Failed to load customer details: " + e.getMessage());
             return "admin/dashboard";
         }
-
-        return "admin/customer-details";
     }
+
+//    @PostMapping("/approve-customer/{customerId}")
+//    @ResponseBody
+//    public Map<String, Object> approveCustomer(@PathVariable Long customerId, HttpServletRequest request) {
+//        try {
+//            String jwtToken = extractJwtFromRequest(request);
+//            customerIntegrationService.approveCustomerKYC(customerId, jwtToken);
+//            return Map.of("success", true);
+//        } catch (Exception e) {
+//            return Map.of("success", false, "message", e.getMessage());
+//        }
+//    }
+
 
     private boolean isAllDocumentsVerified(Map<String, KycDocument> documentMap) {
         String[] requiredTypes = {"AADHAR", "PAN", "PHOTO"};

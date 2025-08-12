@@ -189,17 +189,24 @@ public class KycServiceImpl implements KycService {
         log.info("🔍 Checking if all required documents are verified for customer {}", customerId);
 
         List<KycDocument> documents = getDocumentsByCustomerId(customerId);
+        documents.forEach(doc -> log.info("SERVICE CHECK DOC: {} | {}", doc.getDocumentName(), doc.getStatus()));
 
         Set<String> requiredTypes = Set.of("AADHAR", "PAN", "PHOTO");
+
         Set<String> verifiedTypes = documents.stream()
-                .filter(doc -> doc.getStatus() == VerificationStatus.VERIFIED)
-                .map(doc -> doc.getDocumentType().toUpperCase())
+                .filter(doc -> doc.getStatus() != null
+                        && "VERIFIED".equalsIgnoreCase(doc.getStatus().toString()))
+                .map(doc -> doc.getDocumentName() == null
+                        ? ""
+                        : doc.getDocumentName().trim().toUpperCase())
                 .collect(Collectors.toSet());
 
         boolean result = verifiedTypes.containsAll(requiredTypes);
         log.info("✅ All documents verified: {}", result);
         return result;
     }
+
+
 
     @Override
     public KycStatsDTO getKYCStatistics() {
